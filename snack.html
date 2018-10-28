@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        body{
+            margin: 0;
+            padding: 0;
+            font-weight: 700;
+        }
+        input{
+            margin-left: 20px;
+            float: left;
+            background: #fb7299;
+            color: #fff;
+            outline: none;
+            cursor: pointer;
+            border: none;
+            height: 100%;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+        span{
+            float: left;
+            height: 100% ;
+            cursor: default;
+            margin-left: 20px;
+            line-height: 40px;
+        }
+        nav{
+            height: 40px;
+            margin-top: 20px;
+        }
+        #map{
+            position: absolute;
+            top: 80px;
+            left: 10px;
+            width: 600px;
+            height:600px;
+            background: #fff;
+            border: 4px solid #00a1d6;
+            overflow: hidden;
+            /*蛇身中超出地图的部分应当被隐藏*/
+        }
+    </style>
+</head>
+<body onkeydown="control(event);">
+<nav>
+    <input type="button" id="start" value = "开始游戏">
+    <input type="button" id="stop" value = "暂停游戏">
+    <span>分数：</span>
+    <span id="score"></span>
+</nav>
+<div id="map"></div>
+</body>
+<script>
+    var map = document.getElementById("map");
+    var snack = [];//蛇身
+    var stepX = 20,stepY = 0,direction = "right";
+    var canStart = true,isStop = true;
+    var timer,interval =400;
+    document.getElementById("start").onclick = function () {
+        if(canStart){
+            for(var i = 2;i>=0;i--){
+                drawsnack(i);
+            }
+            move();
+            dead();
+            food();
+            eat();
+            canStart = false;
+        }
+    };
+    document.getElementById("stop").onclick = function () {
+        stop();
+        isStop = !isStop;
+    };
+    function stop() {
+        if(isStop){
+            window.clearTimeout(timer);
+        }else{
+            move();
+        }
+    }
+    function drawsnack(i) {
+            var snackNode = document.createElement("div");
+            snackNode.style.width = "18px";
+            snackNode.style.height = "18px";
+            snackNode.style.border = "1px solid #000";
+            snackNode.style.position = "absolute";
+            snackNode.style.top ="0px";
+            snackNode.style.left =i*20+"px";
+            snackNode.style.backgroundColor = "#fb7299";
+            map.appendChild(snackNode);
+            snack.push(snackNode);
+        }
+
+    function move(){
+        for(i = snack.length-1;i>0;i--){
+            snack[i].style.left = snack[i-1].style.left;
+            snack[i].style.top  = snack[i-1].style.top;
+        }
+        snack[0].style.left = parseInt(snack[0].style.left)+stepX+"px";
+        snack[0].style.top = parseInt(snack[0].style.top)+stepY+"px";
+
+        timer = window.setTimeout("move()",interval);
+        if(snack.length>10&&interval>=200){
+            interval-=snack.length;
+        }
+    }
+    function remove() {
+        window.clearTimeout(timer);
+        move();
+    }
+    function control(event) {
+        if(isStop){
+            switch(event.keyCode){
+                case 37:if(direction === "right"){null;}else{stepX = -20,stepY = 0,direction = "left";}remove();break;
+                case 38:if(direction === "down"){null;}else{stepY= -20,stepX = 0,direction = "up";}remove();break;
+                case 39:if(direction === "left"){null;}else{stepX = 20,stepY = 0,direction = "right";}remove();break;
+                case 40:if(direction === "top"){null;}else{stepY = 20,stepX = 0,direction = "down";}remove();break;
+            }
+        }
+    }
+    function dead() {
+        var score = document.getElementById("score");
+        score.innerHTML = snack.length - 3;
+        var x = parseInt(snack[0].style.left);
+        var y = parseInt(snack[0].style.top);//要获得的是一个数值而不是一个字符串
+        if(x<0||x>580||y>580||y<0){
+            alert("you died!");
+            window.location.reload();//为了防止死弹现象的发生
+        }
+        if(snack.length >4){
+            for(var i = 3;i<snack.length-1;i++){
+                var x1 =parseInt(snack[i].style.left);
+                var y1 = parseInt(snack[i].style.top);
+                if(x===x1&&y1===y){
+                    alert("you died!");
+                    window.location.reload();
+                }
+            }
+        }
+        setTimeout("dead()",30);
+    }
+    function food() {
+        var food_width = "18px";
+        var food_height = "18px";
+        var food_left = (Math.floor(Math.random()*29)+1)*20+"px";//580*580
+        var food_top= (Math.floor(Math.random()*29)+1)*20+"px";
+        var food_bg = Math.round(Math.random()*6+1);
+        var color;
+        switch (food_bg) {
+            case 1:color = "red";break;
+            case 2:color = "orange";break;
+            case 3:color = "yellow";break;
+            case 4:color = "green";break;
+            case 5:color = "indige";break;
+            case 6:color = "blue";break;
+            case 7:color = "purple";break;
+        }
+        var food_div = document.createElement("div");
+        food_div.style.position="absolute";
+        food_div.style.width = food_width;
+        food_div.style.height = food_height;
+        food_div.style.top = food_top;
+        food_div.style.left = food_left;
+        food_div.style.backgroundColor = color;
+        food_div.style.border = "1px solid #333";
+        food_div.id = "i_food";
+        map.appendChild(food_div);
+    }
+    function eat() {
+        var x1 = parseInt(snack[0].style.left);
+        var y1 = parseInt(snack[0].style.top);
+        var i_food = document.getElementById("i_food");
+        var x2 = parseInt(i_food.style.left);
+        var y2 = parseInt(i_food.style.top);
+        if(Math.abs(y2-y1)<20&&Math.abs(x2-x1)<20){
+            snack.push(i_food);
+            i_food.id = "";
+            food();
+        }
+        setTimeout("eat()",30);
+    }
+
+</script>
+</html>
